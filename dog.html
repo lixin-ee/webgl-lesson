@@ -1,0 +1,89 @@
+<!-- Licensed under a BSD license. See license.html for license -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>dog</title>
+	
+	
+		<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+		<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+		<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	
+    <link type="text/css" href="dog.css" rel="stylesheet" />
+	
+	
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas">asdasdas</canvas>
+    <div id="uiContainer" class="menu">
+        <div id="ui">
+            <div id="menu" class="menuHead">Menu</div>
+            <div id="x" class="menuContext"></div>
+            <div id="y" class="menuContext"></div>
+            <div id="angle" class="menuContext"></div>
+            <div id="scaleX" class="menuContext"></div>
+            <div id="scaleY" class="menuContext"></div>
+            <div class="menuContext">
+                整体拖动:
+                <input type="checkbox" id="gb" checked=true>
+
+
+				<input value="一键恢复" onclick="toone()" 
+				type="button">
+            </div>
+            
+        </div>
+    </div>
+</body>
+
+</html>
+
+
+<!-- 修改区 -->
+
+<!-- vertex shader -->
+<script id="vertex-shader-2d" type="x-shader/x-vertex">
+    attribute vec2 a_position;
+attribute vec4 a_color;
+
+uniform mat3 u_matrix;
+
+varying vec4 v_color;
+
+void main() {
+  // Multiply the position by the matrix.
+  gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+
+  // Copy the color from the attribute to the varying.
+  v_color = a_color;
+}
+</script>
+<!-- fragment shader -->
+<script id="fragment-shader-2d" type="x-shader/x-fragment">
+    precision mediump float;
+
+varying vec4 v_color;
+
+void main() {
+  gl_FragColor = v_color;
+}
+</script>
+<!--
+for most samples webgl-utils only provides shader compiling/linking and
+canvas resizing because why clutter the examples with code that's the same in every sample.
+See https://webglfundamentals.org/webgl/lessons/webgl-boilerplate.html
+and https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
+for webgl-utils, m3, m4, and webgl-lessons-ui.
+-->
+<script src="js/webgl-utils.js"></script>
+<script src="js/webgl-lessons-ui.js"></script>
+<script src="js/m3.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/dog.js"></script>

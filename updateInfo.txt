@@ -1,0 +1,14 @@
+1.生成webgl程序的代码(原来是调库,现在是用原生webgl做）linkProgram+getProgram
+2.鼠标拖拽
+2.1三角形内点:可用insideByTriangle
+2.2颜色法:不可用insideByColor
+3.menu套一层框做menu,改动在css文件中
+
+--
+其他:
+js调的库放在了本地，以防展示时没网络
+
+
+
+目前问题:
+如果能知道data如何变成在webgl默认坐标系的位置鼠标拖拽可以更精确，现在只能拖动狗头

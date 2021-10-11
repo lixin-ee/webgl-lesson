@@ -1,0 +1,31 @@
+@import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
+
+body {
+    margin: 0;
+}
+
+canvas {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+}
+	.menu{
+		background-color: palegoldenrod;
+		width: 300px;
+		height:200px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
+	.menuHead{
+		color: black;
+		text-align:center;
+		font-size: 20px;
+	}
+	.menuContext{
+		font-weight: bold;
+	}
+	.reset{
+		
+	}
