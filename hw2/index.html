@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+	<!--
+	ReadMe:
+	请在app.js中编辑代码
+	-->
+	<head>
+		<meta charset="utf-8">
+		<title>webgl-test7</title>
+		<style> 
+
+		</style>
+		<!--
+		用于展示
+		-->
+		<link href="static/css/bootstrap.css" rel="stylesheet">
+		<script src="static/js/bootstrap.js" ></script>
+		
+		<link href="static/css/ex7.css" rel="stylesheet" />
+	</head>
+	<body onload="main()">
+		<canvas id="mcanvas" height="400px">
+			请使用支持canvas的浏览器。
+			Please use the browser supporting canvas.
+		</canvas>
+		<div id="sidebar" class="sidebarContainer">
+			<h4><center>Operating the world coordinate system</center></h4>
+			
+		</div>
+	</body>
+	
+	<script id="vertexShader2d" type="vShader">
+		attribute vec4 a_position;
+		uniform mat4 u_matrix;
+		
+		attribute vec4 inColor;
+		varying vec4 fragmentColor;
+		
+		void main(){
+			gl_Position=u_matrix*a_position;
+			fragmentColor=inColor;
+		}
+	</script>
+	<script id="fragmentShader2d" type="fShader">
+		precision mediump float;
+		varying vec4 fragmentColor;
+		void main(){
+			gl_FragColor=fragmentColor;
+		}
+	</script>
+	<script>
+	//已解决:
+	/*
+	1.封装webgl函数，目前可以使用对象画图,操作简单
+	2.菜单(用于改变世界坐标系)
+	
+	未解决:
+	1.确定三维点太困难，不用工具画狗不现实
+	2.逐级transform还未完成
+	*/
+	</script>
+	<script src="static/js/dataStructure.js"></script>
+	<script src="static/js/utils.js"></script>
+	<script src="static/js/mywebgl-utils.js"></script>
+	<script src="static/js/glMatrix.js"></script>
+	<script src="static/js/webglElements.js"></script>
+	<script src="static/js/ui.js"></script>
+	<script src="static/js/app.js"></script>
+</html>
