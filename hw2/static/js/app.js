@@ -95,6 +95,11 @@ function main() {
 	drawer.rotation=[angle2Radians(xRotationSetter.value),angle2Radians(yRotationSetter.value),angle2Radians(zRotationSetter.value)];
 	drawer.scale=[(xScalerSetter.value-0.9)/100,(yScalerSetter.value-0.9)/100,(zScalerSetter.value-0.9)/100];
 	
+	//绑定虚拟跟踪球,
+	var controlBallContainer=document.getElementById('toolBar');
+	var controlBall={x:0,y:0,container:controlBallContainer};
+	bindBallTrackerUi(controlBall);
+	
 	
 	function test(){
 		setInterval(()=>{
