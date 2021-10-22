@@ -84,26 +84,38 @@ function main() {
 	var xSetter=createUi(sidebar,{id:'x',min:0,max:400,responseFunction:(value)=>{drawer.translation[0]=value}});
 	var ySetter=createUi(sidebar,{id:'y',min:0,max:400,responseFunction:(value)=>{drawer.translation[1]=value}});
 	var zSetter=createUi(sidebar,{id:'z',min:0,max:400,responseFunction:(value)=>{drawer.translation[2]=value}});
-	var xRotationSetter=createUi(sidebar,{id:'xRotation',min:0,max:360,responseFunction:(value)=>{drawer.rotation[0]=angle2Radians(value)}});
-	var yRotationSetter=createUi(sidebar,{id:'yRotation',min:0,max:360,responseFunction:(value)=>{drawer.rotation[1]=angle2Radians(value)}});
-	var zRotationSetter=createUi(sidebar,{id:'zRotation',min:0,max:360,responseFunction:(value)=>{drawer.rotation[2]=angle2Radians(value)}});
 	var xScalerSetter=createUi(sidebar,{id:'scalerX',min:1,max:100,responseFunction:(value)=>{drawer.scale[0]=(value-0.9)/100}});
 	var yScalerSetter=createUi(sidebar,{id:'scalerY',min:1,max:100,responseFunction:(value)=>{drawer.scale[1]=(value-0.9)/100}});
 	var zScalerSetter=createUi(sidebar,{id:'scalerZ',min:1,max:100,responseFunction:(value)=>{drawer.scale[2]=(value-0.9)/100}});
+	var xRotationSetter=createUi(sidebar,{id:'xRotation',min:0,max:360,responseFunction:(value)=>{drawer.rotation[0]=angle2Radians(value)}});
+	var yRotationSetter=createUi(sidebar,{id:'yRotation',min:0,max:360,responseFunction:(value)=>{drawer.rotation[1]=angle2Radians(value)}});
+	var zRotationSetter=createUi(sidebar,{id:'zRotation',min:0,max:360,responseFunction:(value)=>{drawer.rotation[2]=angle2Radians(value)}});
+	
 	//使用右侧菜单的值初始化世界坐标系
 	drawer.translation=[xSetter.value,ySetter.value,zSetter.value];
 	drawer.rotation=[angle2Radians(xRotationSetter.value),angle2Radians(yRotationSetter.value),angle2Radians(zRotationSetter.value)];
 	drawer.scale=[(xScalerSetter.value-0.9)/100,(yScalerSetter.value-0.9)/100,(zScalerSetter.value-0.9)/100];
 	
 	//绑定虚拟跟踪球,
-	var controlBallContainer=document.getElementById('toolBar');
-	var controlBall={x:0,y:0,container:controlBallContainer};
-	bindBallTrackerUi(controlBall);
 	
+	function mousemove(vector,theta){
+		
+		drawer.preTransformMatrix=glMatrix._rotateAnyVectorWithFixedPoint(vector[0],vector[1],vector[2],theta,0,0,0);
+		//console.log(drawer.preTransformMatrix);
+	}
+	function mouseup(vector,theta){
+		
+		drawer.transformMatrix=glMatrix.multiply(drawer.transformMatrix,drawer.preTransformMatrix);
+		drawer.preTransformMatrix=glMatrix._one();
+		}
+	var controlBallContainer=document.getElementById('toolBar');
+	var controlBall={x:0,y:0,container:controlBallContainer,mouseup:mouseup,mousemove:mousemove};
+	bindBallTrackerUi(controlBall);
 	
 	function test(){
 		setInterval(()=>{
 			drawer.render();
+			
 		},5)
 	}
 	test()

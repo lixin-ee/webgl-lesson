@@ -1,3 +1,4 @@
+var epsilon=0.00001;//防除以0
 //出于取相机维度的需求,我们将二维矩阵取为以列为优先的一维数组
 class glMatrix{
 	/*
@@ -44,30 +45,15 @@ class glMatrix{
 	}
 	static _xRotate(thetaInRadians){
 		var [s,c]=getSinCos(thetaInRadians);
-		return [
-			1, 0, 0, 0,
-			0, c, s, 0,
-			0,-s, c, 0,
-			0, 0, 0, 1
-		];
+		return this._xRotateBySinCos(s,c);
 	}	
 	static _yRotate(thetaInRadians){
 		var [s,c]=getSinCos(thetaInRadians);
-		return [
-			c, 0, -s, 0,
-			0, 1,  0, 0,
-			s, 0,  c, 0,
-			0, 0,  0, 1
-		];
+		return this._yRotateBySinCos(s,c);
 	}
 	static _zRotate(thetaInRadians){
 		var [s,c]=getSinCos(thetaInRadians);
-		return [
-			 c, s, 0, 0,
-			-s, c, 0, 0,
-			 0, 0, 1, 0,
-			 0, 0, 0, 1
-		];
+		return this._zRotateBySinCos(s,c);
 	}
 	static _scale(sx,sy,sz) {
 	    return [
@@ -138,4 +124,110 @@ class glMatrix{
 	static yRotate(matrix,thetaInRadians){return this.multiply(matrix,this._yRotate(thetaInRadians));}
 	static zRotate(matrix,thetaInRadians){return this.multiply(matrix,this._zRotate(thetaInRadians));}
 	static scale(matrix,sx,sy,sz){return this.multiply(matrix,this._scale(sx,sy,sz));}
+	
+	static T(matrix){
+		return [
+			matrix[0*4+0],matrix[1*4+0],matrix[2*4+0],matrix[3*4+0],
+			matrix[0*4+1],matrix[1*4+1],matrix[2*4+1],matrix[3*4+1],
+			matrix[0*4+2],matrix[1*4+2],matrix[2*4+2],matrix[3*4+2],
+			matrix[0*4+3],matrix[1*4+3],matrix[2*4+3],matrix[3*4+3]
+		]
+	}
+	
+	static _inverseXRotate(thetaInRadians){
+		return this._xRotate(-thetaInRadians);
+	}
+	
+	static _inverseYRotate(thetaInRadians){
+		return this._yRotate(-thetaInRadians);
+	}
+	
+	static _inverseZRotate(thetaInRadians){
+		return this._zRotate(-thetaInRadians);
+	}
+	static _inverseTranslate(dx,dy,dz){
+		return this._translate(-dx,-dy,-dz);
+	}
+	static _xRotateBySinCos(sin,cos){
+		return [
+			1, 0, 0, 0,
+			0, cos, sin, 0,
+			0,-sin, cos, 0,
+			0, 0, 0, 1
+		];
+	}
+	static _yRotateBySinCos(sin,cos){
+		return [
+			cos, 0, -sin, 0,
+			0, 1,  0, 0,
+			sin, 0,  cos, 0,
+			0, 0,  0, 1
+		];
+	}
+	static _zRotateBySinCos(sin,cos){
+		return [
+			 cos, sin, 0, 0,
+			-sin, cos, 0, 0,
+			 0, 0, 1, 0,
+			 0, 0, 0, 1
+		];
+	}
+	static _rotateAnyUtilRxthetaX(ax,ay,az){//向量在3个方向的投影
+		return this._xRotateBySinCos(ay/Math.sqrt(ay*ay+az*az),az/Math.sqrt(ay*ay+az*az));
+	}
+	static _rotateAnyUtilRythetaY(ax,ay,az){
+		return this._yRotateBySinCos(-ax,Math.sqrt(ay*ay+az*az));//第二次旋转为顺时针，角度取反,正弦取反
+	}
+	static _inverseRotateAnyUtilRxthetaX(ax,ay,az){
+		return this._xRotateBySinCos(-ay/Math.sqrt(ay*ay+az*az),az/Math.sqrt(ay*ay+az*az));
+	}
+	static _inverseRotateAnyUtilRythetaY(ax,ay,az){
+		return this._yRotateBySinCos(ax,Math.sqrt(ay*ay+az*az));//第二次旋转为顺时针，角度取反,正弦取反
+	}
+	
+	//任意旋转轴算法
+	static _rotateAnyUtilVector(ax,ay,az,theta){//d..旋转轴向量,要求为已经单位化过的
+		ay+=epsilon;
+		az+=epsilon;
+		var rst=this._rotateAnyUtilRxthetaX(ax,ay,az)
+		rst=this.multiply(rst,this._rotateAnyUtilRythetaY(ax,ay,az));
+		rst=this.multiply(rst,this._zRotate(theta));
+		rst=this.multiply(rst,this._inverseRotateAnyUtilRythetaY(ax,ay,az));
+		rst=this.multiply(rst,this._inverseRotateAnyUtilRxthetaX(ax,ay,az));
+		return rst;
+	}
+	
+	//含不动点的任意旋转轴算法
+	static _rotateAnyUtilVectorWithFixedPoint(ax,ay,az,theta,mx,my,mz){
+		var rst=this._inverseTranslate(mx,my,mz);
+		
+		rst=this.multiply(rst, this._rotateAnyUtilVector(ax,ay,az,theta));
+		
+		rst=this.multiply(rst,this._translate(mx,my,mz));
+
+		return rst;
+	}
+	
+	static _rotateAnyVectorWithFixedPoint(dx,dy,dz,theta,mx,my,mz){
+		var norm=this.vectorNorm([dx,dy,dz]);
+		var ax=dx/norm;
+		var ay=dy/norm;
+		var az=dz/norm;
+		return this._rotateAnyUtilVectorWithFixedPoint(ax,ay,az,theta,mx,my,mz);
+	}
+	//向量叉乘,待改
+	static _crossMultiplyVector(a,b){
+		return [
+			a[1]*b[2]-a[2]*b[1],
+			a[2]*b[0]-a[0]*b[2],
+			a[0]*b[1]-a[1]*b[0]];
+	}
+	
+	static vectorNorm(a){
+		var rst=0;
+		for(let i=0;i<a.length;++i){
+			rst+=a[i]*a[i];
+		}
+		return Math.sqrt(rst);
+	}
 }
