@@ -123,6 +123,10 @@ class Canvas{
 		this.rotation = [angle2Radians(40), angle2Radians(25), angle2Radians(325)];
 		this.scale = [1, 1, 1];
 		this.color = [Math.random(), Math.random(), Math.random(), 1];
+		
+		this.transformMatrix=glMatrix._one();
+		this.preTransformMatrix=glMatrix._one();
+		
 	}
 	setData(arg){
 		//分配给对象一个offset
@@ -240,6 +244,8 @@ class Canvas{
 		matrix = glMatrix.zRotate(matrix, this.rotation[2]);
 		matrix = glMatrix.scale(matrix, this.scale[0], this.scale[1], this.scale[2]);
 		
+		matrix=glMatrix.multiply(matrix,this.transformMatrix);
+		matrix=glMatrix.multiply(matrix,this.preTransformMatrix);
 		
 		this.gl.uniformMatrix4fv(this.matrixLocation,false,matrix);
 		this.gl.drawArrays(this.gl.TRIANGLES,0,this.vertexNum);

@@ -1,3 +1,10 @@
+function svgPostion(svg,event){
+	var point = svg.createSVGPoint();
+	point.x =event.pageX; 
+	point.y =event.pageY;
+	point=point.matrixTransform(svg.getScreenCTM().inverse());
+	return [point.x,point.y]
+}
 function createUi(container,ui){
 	var block=document.createElement('div');
 	block.setAttribute('class','setter');
@@ -43,6 +50,11 @@ function bindBallTrackerUi(ui){
 	var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
 	svg.setAttribute('viewBox','-1 -1 2 2');
 	svg.setAttribute('class','virtualTrackBallContainer');
+	svg.setAttribute('width',ui.container.offsetWidth);
+	svg.setAttribute('height',ui.container.offsetHeight);
+	
+	var transformer=document.createElementNS('http://www.w3.org/2000/svg','g');
+	transformer.setAttribute('transform','')
 	
 	var containerBall=document.createElementNS('http://www.w3.org/2000/svg','circle');
 	containerBall.setAttribute('cx',0);
@@ -59,29 +71,38 @@ function bindBallTrackerUi(ui){
 	controlBall.setAttribute('r',0.3);
 	controlBall.setAttribute('fill','#a4a5a5');
 	
-	svg.appendChild(containerBall);
-	svg.appendChild(controlBall);
+	transformer.appendChild(containerBall);
+	transformer.appendChild(controlBall);
+	svg.appendChild(transformer);
+	svg.appendChild(transformer);
 	ui.container.appendChild(svg);
 	
 	var dragging=false;
+	var x=0,y=0;
+
 	var boundingClientRect=svg.getBoundingClientRect();
 	var movelength=0;
+	
 	controlBall.addEventListener('mousedown',()=>{
 		if(!dragging){
 			dragging=true;
 			window.addEventListener('mousemove',(event)=>{
 				if(dragging){
-					//console.log(boundingClientRect);
-					ui.x=2*(event.clientX-boundingClientRect.left)/boundingClientRect.width-1;
-					ui.y=2*(event.clientY-boundingClientRect.top)/boundingClientRect.height-1;
-					movelength=Math.sqrt(ui.x*ui.x+ui.y*ui.y);
+					[x,y]=svgPostion(svg,event);
+					movelength=Math.sqrt(x*x+y*y);
+					x-=0//0.5;
 					if(movelength>1){
-						controlBall.setAttribute('cx',ui.x/movelength);
-						controlBall.setAttribute('cy',ui.y/movelength);
-					}else{
-						controlBall.setAttribute('cx',ui.x);
-						controlBall.setAttribute('cy',ui.y);
+						x/=movelength;
+						y/=movelength;
 					}
+					var z=Math.sqrt(1-x*x-y*y);
+				
+					controlBall.setAttribute('cx',x);
+					controlBall.setAttribute('cy',y);
+	
+					ui.vector=glMatrix._crossMultiplyVector([0,0,1],[x,-y,z]);
+					ui.theta=Math.asin(glMatrix.vectorNorm(ui.vector));
+					ui.mousemove(ui.vector,ui.theta);
 				}
 			})
 			window.addEventListener('mouseup',(event)=>{
@@ -89,8 +110,19 @@ function bindBallTrackerUi(ui){
 					dragging=false;
 					controlBall.setAttribute('cx',0);
 					controlBall.setAttribute('cy',0);
+					ui.mouseup(ui.vector,ui.theta);
 				}
 			})
 		}
 	})
 }
+var isclose=false;
+var toolbar=document.getElementById('toolButton');
+toolbar.addEventListener('mousedown',()=>{
+	isclose=isclose^1;
+	if(isclose){
+		document.getElementById('toolBar').setAttribute('class','toolBar-hidden');
+	}else{
+		document.getElementById('toolBar').setAttribute('class','toolBar');
+	}
+});

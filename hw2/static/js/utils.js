@@ -39,3 +39,4 @@ function getSinCos(thetaInRadians){
 	return [Math.sin(thetaInRadians),
 			Math.cos(thetaInRadians)];
 }
+//drawer.preTransformMatrix
