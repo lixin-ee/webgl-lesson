@@ -92,9 +92,14 @@ class Entity{
 		this.scale = [1, 1, 1];
 		this.matrix=glMatrix._one();
 
+		this.objectMatrix=glMatrix._one();//物体坐标系
+		
 		this.refreshMatrix();
 		
 		this.offset=0;
+	}
+	refreshObjectMatrix(){
+		
 	}
 	refreshMatrix(){
 		this.matrix=glMatrix._one();
@@ -103,6 +108,7 @@ class Entity{
 		this.matrix = glMatrix.yRotate(this.matrix , this.rotation[1]);
 		this.matrix = glMatrix.zRotate(this.matrix , this.rotation[2]);
 		this.matrix = glMatrix.scale(this.matrix , this.scale[0], this.scale[1], this.scale[2]);
+		this.matrix=  glMatrix.multiply(this.matrix ,glMatrix.inverse( this.objectMatrix));
 		//console.log(this.matrix);
 	}
 	addComponent(elem){
@@ -329,3 +335,135 @@ class Canvas{
 		}
 	}
 }
+function responseSpaceP(arg) {
+		return '\{' + 'x:' + arg.x + ',y:' + arg.y + ",z:" + arg.z + ",width:" + arg.width + ',color:"' + arg.color +
+			'"\},';
+	}
+
+	function responseSpaceBlock(arg) {
+		var x = 0,
+			y = 0,
+			z = 0,
+			color = 0,
+			width = 0;
+		[x, y, z, colors, width] = [arg.x, arg.y, arg.z, arg.colors, arg.width];
+		var entity = new Entity();
+		entity.addComponent(new Shape({ //后
+			points: [
+				x + 0, y + 0, z + 0,
+				x + 0, y + width, z + 0,
+				x + 0, y + width, z + width,
+				x + 0, y + 0, z + 0,
+				x + 0, y + width, z + width,
+				x + 0, y + 0, z + width
+			],
+			colors: colors[0]
+		}))
+		entity.addComponent(new Shape({ //前
+			points: [
+				x + width, y + 0, z + 0,
+				x + width, y + width, z + 0,
+				x + width, y + width, z + width,
+
+				x + width, y + 0, z + 0,
+				x + width, y + 0, z + width,
+				x + width, y + width, z + width,
+
+			],
+			colors: colors[1]
+		}))
+		entity.addComponent(new Shape({ //左
+			points: [
+				x + 0, y + 0, z + 0,
+				x + width, y + 0, z + 0,
+				x + width, y + 0, z + width,
+				x + 0, y + 0, z + 0,
+				x + width, y + 0, z + width,
+				x + 0, y + 0, z + width
+			],
+			colors: colors[2]
+		}))
+		entity.addComponent(new Shape({ //右
+			points: [
+				x + 0, y + width, z + width,
+				x + width, y + width, z + width,
+				x + width, y + width, z + 0,
+				x + width, y + width, z + 0,
+				x + 0, y + width, z + width,
+				x + 0, y + width, z + 0
+			],
+			colors: colors[3]
+		}))
+		entity.addComponent(new Shape({ //上
+			points: [
+				x + 0, y + 0, z + width,
+				x + 0, y + width, z + width,
+				x + width, y + width, z + width,
+				x + 0, y + 0, z + width,
+				x + width, y + width, z + width,
+				x + width, y + 0, z + width
+			],
+			colors: colors[4]
+		}))
+		entity.addComponent(new Shape({ //下
+			points: [
+				x + 0, y + 0, z + 0,
+				x + 0, y + width, z + 0,
+				x + width, y + width, z + 0,
+				x + 0, y + 0, z + 0,
+				x + width, y + width, z + 0,
+				x + width, y + 0, z + 0
+			],
+			colors: colors[5]
+		}))
+		return entity;
+	}
+
+	function responseSpaceCurPosition(arg) {
+		return new Shape({
+			points: arg.curpoints,
+			colors: arg.color
+		});
+	}
+
+	function responseSpacePPosition(arg) {
+		return 'new Shape({\n' +
+			'points:[' + curPos2Str() +
+			'],colors:' + '"' + arg.color + '"' +
+			'})'
+	}
+
+
+	function pointerChanger(theta, curpoints, point) {
+		for (let i = 0; i < curpoints.length / 3; ++i) {
+			if (Math.sqrt((curpoints[i * 3 + 0] - point[0]) * (curpoints[i * 3 + 0] - point[0]) +
+					(curpoints[i * 3 + 1] - point[1]) * (curpoints[i * 3 + 1] - point[1]) +
+					(curpoints[i * 3 + 2] - point[2]) * (curpoints[i * 3 + 2] - point[2])) < theta) {
+				return [curpoints[i * 3 + 0], curpoints[i * 3 + 1], curpoints[i * 3 + 2]]
+			}
+		}
+		return point;
+	}
+	
+	function generateEntityFromBlockData(data) {
+		var tran = new Entity();
+		for (let i = 0; i < data.length; ++i) {
+	
+			data[i].colors = [data[i].color, data[i].color, data[i].color, data[i].color, data[i].color, data[i].color]
+			//console.log(data[i]);
+			tran.addComponent(responseSpaceBlock(data[i]));
+		}
+		return tran;
+	}
+	function curPos2Str() {
+		var str = ''
+		console.log(curpoints);
+		for (let i = 0; i < curpoints.length - 1; ++i) {
+			str += curpoints[i] + ',';
+			if (i % 3 == 2) {
+				str += '\n';
+			}
+		}
+		str += curpoints[curpoints.length - 1];
+		return str;
+	}
