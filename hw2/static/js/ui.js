@@ -1,3 +1,4 @@
+var epsilon=0.001;
 function svgPostion(svg,event){
 	var point = svg.createSVGPoint();
 	point.x =event.pageX; 
@@ -86,14 +87,16 @@ function bindBallTrackerUi(ui){
 	controlBall.addEventListener('mousedown',()=>{
 		if(!dragging){
 			dragging=true;
+			controlBall.setAttribute('fill',"#717171");
 			window.addEventListener('mousemove',(event)=>{
 				if(dragging){
 					[x,y]=svgPostion(svg,event);
 					movelength=Math.sqrt(x*x+y*y);
 					x-=0//0.5;
 					if(movelength>1){
-						x/=movelength;
-						y/=movelength;
+						//此处增加一个小的epsilon是因为由于浮点数精度问题有的时候会让x*x+y*y略大于1,导致闪烁
+						x/=(movelength+epsilon);
+						y/=(movelength+epsilon);
 					}
 					var z=Math.sqrt(1-x*x-y*y);
 				
@@ -101,6 +104,12 @@ function bindBallTrackerUi(ui){
 					controlBall.setAttribute('cy',y);
 	
 					ui.vector=glMatrix._crossMultiplyVector([0,0,1],[x,-y,z]);
+					
+					/*此处待改,为了完成效果，此处的原理还不对*/
+					ui.vector[0] *= -1;
+					ui.vector[1] *= -1;
+					ui.vector[2] *= -1;
+					
 					ui.theta=Math.asin(glMatrix.vectorNorm(ui.vector));
 					ui.mousemove(ui.vector,ui.theta);
 				}
@@ -108,6 +117,7 @@ function bindBallTrackerUi(ui){
 			window.addEventListener('mouseup',(event)=>{
 				if(dragging){
 					dragging=false;
+					controlBall.setAttribute('fill','#a4a5a5');
 					controlBall.setAttribute('cx',0);
 					controlBall.setAttribute('cy',0);
 					ui.mouseup(ui.vector,ui.theta);
