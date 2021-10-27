@@ -14,8 +14,13 @@ class Shape{
 		*/
 		this.points=arg.points;
 		this.colors=hex2RGB256(arg.colors);
+		//console.log(arg.points);
 		this.vertexNum=arg.points.length/3;
 		this.expandVertex();
+		
+		this.offset=0;
+		
+		this.count=0;//调试
 	}
 	transform(arg){
 		
@@ -24,18 +29,35 @@ class Shape{
 		return arrayExpand(this.colors,this.vertexNum);
 	}
 	expandVertex(){
-		
+		return this.points
 	}
-	getGeometryData(){
+	getGeometryData(offset){
+		this.offset=offset;
 		return this.expandVertex();
 	}
 	getColorData(){
 		return this.expandColor();
 	}
+	
+	draw(arg){
+		//console.log(arg.matrix)
+		arg.gl.uniformMatrix4fv(arg.matrixLocation,false,arg.matrix);
+		
+		if(this.count==0){
+			this.count++;
+		}
+		arg.gl.drawArrays(arg.gl.TRIANGLES,this.offset,this.vertexNum);
+	}
 }
 class Triangle extends Shape{
 	constructor(arg) {
 	    super(arg);
+	}
+	expandVertex(){
+		this.vertexNum=3;
+		return new Array(this.points[0],this.points[1],this.points[2],
+				this.points[3],this.points[4],this.points[5],
+				this.points[6],this.points[7],this.points[8])
 	}
 }
 class Quadrilateral extends Shape{
@@ -65,9 +87,23 @@ class Entity{
 	constructor(arg) {
 	    this.compoments=new elementList();
 		
-		this.translation=new elementListFixLength(3);
-		this.rotation=new elementListFixLength(3);
-		this.scale=new elementListFixLength(3);
+		this.translation = [0, 0, 0];
+		this.rotation = [0,0,0];
+		this.scale = [1, 1, 1];
+		this.matrix=glMatrix._one();
+
+		this.refreshMatrix();
+		
+		this.offset=0;
+	}
+	refreshMatrix(){
+		this.matrix=glMatrix._one();
+		this.matrix = glMatrix.translate(this.matrix , this.translation[0], this.translation[1], this.translation[2]);
+		this.matrix = glMatrix.xRotate(this.matrix , this.rotation[0]);
+		this.matrix = glMatrix.yRotate(this.matrix , this.rotation[1]);
+		this.matrix = glMatrix.zRotate(this.matrix , this.rotation[2]);
+		this.matrix = glMatrix.scale(this.matrix , this.scale[0], this.scale[1], this.scale[2]);
+		//console.log(this.matrix);
 	}
 	addComponent(elem){
 		this.compoments.push(elem);
@@ -81,11 +117,12 @@ class Entity{
 		matrix = glMatrix.scale(matrix, this.scale[0], this.scale[1], this.scale[2]);
 		return matrix;
 	}
-	getGeometryData(){
+	getGeometryData(offset){
 		
 		var geometryData=[];
 		for(let i=0;i<this.compoments.length;++i){
-			concat(geometryData,this.compoments.get(i).getGeometryData());
+			//console.log(offset,geometryData.length);
+			concat(geometryData,this.compoments.get(i).getGeometryData(offset+geometryData.length/3));
 		}
 		
 		return geometryData;
@@ -95,17 +132,36 @@ class Entity{
 		for(let i=0;i<this.compoments.length;++i){
 			concat(colorData,this.compoments.get(i).getColorData());
 		}
+		
+		//console.log(colorData);
 		return colorData;
 	}
 	transform(arg) {
 		
 	}
+	draw(arg){
+		for(let i=0;i<this.compoments.length;++i){
+			this.refreshMatrix();
+			//console.log(this.matrix);
+			//console.log(arg.matrix)
+			this.compoments.get(i).draw({
+				gl:arg.gl,
+				matrixLocation:arg.matrixLocation,
+				matrix:glMatrix.multiply(arg.matrix,this.matrix),
+			});
+		}
+	}
 }
+var error=0;
 class Canvas{
 	constructor(arg) {
 		this.entities=new elementList();
 		
 	    var canvas=getElement(arg.canvasId);
+		
+		//抗锯齿
+		canvas.width = canvas.clientWidth * window.devicePixelRatio;
+		canvas.height = canvas.clientHeight * window.devicePixelRatio;
 		
 		this.gl=getGL(canvas);
 		this.programObject=getProgram(this.gl,arg.vShader,arg.fShader);
@@ -127,6 +183,8 @@ class Canvas{
 		this.transformMatrix=glMatrix._one();
 		this.preTransformMatrix=glMatrix._one();
 		
+		this.matrix=glMatrix._one();
+		
 	}
 	setData(arg){
 		//分配给对象一个offset
@@ -134,13 +192,16 @@ class Canvas{
 		var geometryData=[];
 		var colorData=[];
 		for(let i=0;i<this.entities.length;++i){
-			concat(geometryData,this.entities.get(i).getGeometryData());
+			var offset=geometryData.length/3;
+			concat(geometryData,this.entities.get(i).getGeometryData(offset));
 			concat(colorData,this.entities.get(i).getColorData());
 		}
-		if(geometryData.length!=colorData.length){
+		//console.log(geometryData);
+		if(geometryData.length!=colorData.length&&error==0){
 			console.log(geometryData);
 			console.log(colorData);
 			console.log('ERROR:color 数组和geometry数组长度不相等.')
+			error=1;
 		}
 		this.vertexNum=geometryData.length/3;
 		this.passDataToMemoryGeometry({data:geometryData});
@@ -213,6 +274,9 @@ class Canvas{
 	addEntity(elem){
 		this.entities.push(elem);
 	}
+	setEntity(i,elem){
+		this.entities.set(i,elem);
+	}
 	render(){
 		this.gl.viewport(0,0,this.gl.canvas.width,this.gl.canvas.height);
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -231,23 +295,37 @@ class Canvas{
 		
 		//copy:...
 		var left = 0;
-		var right = this.gl.canvas.clientWidth;
-		var bottom = this.gl.canvas.clientHeight;
+		var right = this.gl.canvas.clientWidth*2;
+		var bottom = this.gl.canvas.clientHeight*2;
 		var top = 0;
-		var near = 400;
-		var far = -400;
-		var matrix=glMatrix._orthographic(left, right, bottom, top, near, far);
+		var near = 800;
+		var far = -800;
+		this.matrix=glMatrix._orthographic(left, right, bottom, top, near, far);
 		
-		matrix = glMatrix.translate(matrix, this.translation[0], this.translation[1], this.translation[2]);
-		matrix = glMatrix.xRotate(matrix, this.rotation[0]);
-		matrix = glMatrix.yRotate(matrix, this.rotation[1]);
-		matrix = glMatrix.zRotate(matrix, this.rotation[2]);
-		matrix = glMatrix.scale(matrix, this.scale[0], this.scale[1], this.scale[2]);
+		this.matrix = glMatrix.translate(this.matrix , this.translation[0], this.translation[1], this.translation[2]);
+		this.matrix = glMatrix.xRotate(this.matrix , this.rotation[0]);
+		this.matrix = glMatrix.yRotate(this.matrix , this.rotation[1]);
+		this.matrix = glMatrix.zRotate(this.matrix , this.rotation[2]);
+		this.matrix = glMatrix.scale(this.matrix , this.scale[0], this.scale[1], this.scale[2]);
 		
-		matrix=glMatrix.multiply(matrix,this.transformMatrix);
-		matrix=glMatrix.multiply(matrix,this.preTransformMatrix);
 		
-		this.gl.uniformMatrix4fv(this.matrixLocation,false,matrix);
-		this.gl.drawArrays(this.gl.TRIANGLES,0,this.vertexNum);
+		//此处没有理解为什么需要转置
+		
+		this.matrix=glMatrix.multiply(this.matrix ,this.preTransformMatrix);
+		this.matrix=glMatrix.multiply(this.matrix ,this.transformMatrix);
+		
+		
+		this.draw();
+
+	}
+	draw(){
+		var arg={
+			matrix:this.matrix,
+			matrixLocation:this.matrixLocation,
+			gl:this.gl
+		};
+		for(let i=0;i<this.entities.length;++i){
+			this.entities.get(i).draw(arg);
+		}
 	}
 }
