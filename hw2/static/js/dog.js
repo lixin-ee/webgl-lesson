@@ -6508,7 +6508,9 @@ dog.movebackward=function(dx){
 	dog.moveforward(-dx);
 }
 dog.turnside=function(dtheta){
-		dog.objectMatrix=glMatrix.multiply(glMatrix._inverseTranslate(325,150,2000),dog.objectMatrix)
-		dog.objectMatrix=glMatrix.multiply(glMatrix._xRotate(dtheta),dog.objectMatrix)//矩阵逆的性质
-		dog.objectMatrix=glMatrix.multiply(glMatrix._translate(325,150,2000),dog.objectMatrix);		
+	dog.objectMatrix=glMatrix.multiply(glMatrix._inverseTranslate(325,150,2000),dog.objectMatrix)
+	dog.objectMatrix=glMatrix.multiply(glMatrix._xRotate(dtheta),dog.objectMatrix)//矩阵逆的性质
+	dog.objectMatrix=glMatrix.multiply(glMatrix._translate(325,150,2000),dog.objectMatrix);		
 }
+var dogWhole=new Entity();
+dogWhole.addComponent(dog);
