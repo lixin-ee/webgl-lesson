@@ -41,6 +41,8 @@ function main() {
 	arrow.addComponent(responseSpaceBlock({x:125,y:350,z:0,width:300+10,colors:["#ff0000","#ff0000","#ff0000","#ff0000","#ff0000","#ff0000"]}))
 	drawer.addEntity(arrow);
 	drawer.addEntity(tranEntity);
+	
+
 	drawer.addEntity(dog);
 	
 	var ground=new Entity();
@@ -346,9 +348,81 @@ function main() {
 					if (iterations >= maxIteration)
 						clearInterval(interval);
 				}
+			}
+			/*
+			注明:平移变换可交换
+			*/
+		   //注意，这里使用的是webgl原本的坐标系(因为要相对于屏幕变换，要将drawer本身坐标系变换到默认-1，1坐标系)
+		   //注意,webgl始终是z轴朝向的正视投影,所以z方向变化看不到
+		   var screenR=[0,0,0];
+			if(event.keyCode==82){//前移	R
 				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._translate(0,0,0.2))
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
+			}
+			if(event.keyCode==89){//后移Y
+
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._translate(0,0,-0.2))
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
+			}
+			if(event.keyCode==84){//上移T
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._translate(0,-0.2,0))
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
+			}
+			if(event.keyCode==71){//下移G
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._translate(0,0.2,0))
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
+			}
+			if(event.keyCode==70){//左移F
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._translate(0.2,0,0))
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
+			}
+			if(event.keyCode==72){//右移H
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._translate(-0.2,0,0))
+				
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
 			}
 			
+			if(event.keyCode==86){//绕X转V
+				screenR[0]+=0.1;
+				//console.log(drawer.matrix)
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._xRotate(screenR[0]))
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
+			}
+			if(event.keyCode==66){//绕Y转B
+				screenR[1]+=0.1;	
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._yRotate(screenR[1]))
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
+			}
+			if(event.keyCode==78){//绕Z转N
+				screenR[2]+=0.1;
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix.inverse(drawer.matrix));
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,glMatrix._zRotate(screenR[2]))
+				dog.objectMatrix=glMatrix.multiply(dog.objectMatrix,drawer.matrix);
+			}
 			
 			
 			newp = glMatrix.multiply(tran, glMatrix.T(arrow.matrix));

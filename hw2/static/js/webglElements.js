@@ -91,6 +91,12 @@ class Entity{
 		this.rotation = [0,0,0];
 		this.scale = [1, 1, 1];
 		this.matrix=glMatrix._one();
+		
+		//屏幕坐标系
+		this.translationScreen= [0, 0, 0];
+		this.rotationScreen = [0,0,0];
+		
+		
 
 		this.objectMatrix=glMatrix._one();//物体坐标系
 		
@@ -103,12 +109,23 @@ class Entity{
 	}
 	refreshMatrix(){
 		this.matrix=glMatrix._one();
+		
+		
+		
 		this.matrix = glMatrix.translate(this.matrix , this.translation[0], this.translation[1], this.translation[2]);
 		this.matrix = glMatrix.xRotate(this.matrix , this.rotation[0]);
 		this.matrix = glMatrix.yRotate(this.matrix , this.rotation[1]);
 		this.matrix = glMatrix.zRotate(this.matrix , this.rotation[2]);
 		this.matrix = glMatrix.scale(this.matrix , this.scale[0], this.scale[1], this.scale[2]);
 		this.matrix=  glMatrix.multiply(this.matrix ,glMatrix.inverse( this.objectMatrix));
+		
+		//屏幕坐标系
+		var screenmatrix=glMatrix._translate(this.translationScreen[0], this.translationScreen[1], this.translationScreen[2])
+		//screenmatrix =glMatrix.xRotate(this.rotationScreen[0],screenmatrix);
+		//screenmatrix =glMatrix.yRotate(this.rotationScreen[1],screenmatrix );
+		//screenmatrix =glMatrix.zRotate(this.rotationScreen[2],screenmatrix );
+		
+		this.matrix=glMatrix.multiply(screenmatrix ,this.matrix);
 		//console.log(this.matrix);
 	}
 	addComponent(elem){
